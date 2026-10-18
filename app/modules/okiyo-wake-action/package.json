@@ -1,0 +1,6 @@
+{
+  "name": "okiyo-wake-action",
+  "version": "1.0.0",
+  "description": "Native non-foreground wake follow-up notification action for Okiyo",
+  "main": "src/index.ts"
+}

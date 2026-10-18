@@ -1,0 +1,56 @@
+diff --git a/node_modules/expo-widgets/ios/Widgets/AppIntent.swift b/node_modules/expo-widgets/ios/Widgets/AppIntent.swift
+index 1730fff..79e7d18 100644
+--- a/node_modules/expo-widgets/ios/Widgets/AppIntent.swift
++++ b/node_modules/expo-widgets/ios/Widgets/AppIntent.swift
+@@ -1,5 +1,6 @@
+ import AppIntents
+ import WidgetKit
++import ActivityKit
+ 
+ struct WidgetReload: AppIntent {
+   // title is not used for non-discoverable intents, but it is required
+@@ -105,6 +106,7 @@ struct LiveActivityUserInteraction: LiveActivityIntent {
+   // title is not used for non-discoverable intents, but it is required
+   static var title: LocalizedStringResource = "User Interaction"
+   static var isDiscoverable: Bool = false
++  static var openAppWhenRun: Bool { false }
+ 
+   @Parameter(title: "source")
+   var source: String?
+@@ -119,12 +121,36 @@ struct LiveActivityUserInteraction: LiveActivityIntent {
+   }
+ 
+   func perform() async throws -> some IntentResult {
++    guard let target else { return .result() }
+     WidgetsEvents.shared.sendNotification(type: .userEvent, data: [
+       "source": source as Any,
+       "target": target as Any,
+       "timestamp": Int(Date().timeIntervalSince1970 * 1000)
+     ])
++    await OkiyoWakeActivityLifecycle.endConfirmed(wakeId: target)
+ 
+     return .result()
+   }
+ }
++
++/// Lets the host app's native wake-action module end Expo Widgets' ActivityKit
++/// instance without depending on JavaScript being alive after a Lock Screen tap.
++public enum OkiyoWakeActivityLifecycle {
++  public static func endConfirmed(wakeId: String) async {
++    guard let groupIdentifier = Bundle.main.object(forInfoDictionaryKey: "ExpoWidgetsAppGroupIdentifier") as? String,
++          let defaults = UserDefaults(suiteName: groupIdentifier),
++          defaults.string(forKey: "okiyo.wake-followup.confirmed-wake-id") == wakeId else {
++      return
++    }
++
++    for activity in Activity<LiveActivityAttributes>.activities {
++      guard activity.content.state.name == "WakeFollowupActivity",
++            let data = activity.content.state.props?.data(using: .utf8),
++            let props = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
++            props["wakeId"] as? String == wakeId else {
++        continue
++      }
++      await activity.end(nil, dismissalPolicy: .immediate)
++    }
++  }
++}

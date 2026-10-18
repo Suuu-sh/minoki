@@ -1,0 +1,7 @@
+{
+  "name": "okiyo-server",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "d1_databases": [{ "binding": "DB", "database_name": "okiyo", "database_id": "77c39187-cf01-496d-bc07-c89101e74761", "migrations_dir": "migrations" }],
+  "triggers": { "crons": ["*/5 * * * *"] }
+}
