@@ -1,6 +1,6 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, AppState, Linking, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, AppState, Keyboard, Linking, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -171,13 +171,13 @@ export function WakeAlarmCard() {
           <Pressable accessibilityRole="button" accessibilityLabel="編集を閉じる" onPress={closeEditor} style={StyleSheet.absoluteFill} />
           <View style={[styles.editor, { backgroundColor: t.card }]}>
             <View style={styles.editorHead}>
-              <View style={{ flex: 1 }}><Text style={[styles.editorTitle, { color: t.text }]}>{draft.groupLinked ? 'グループ起床アラーム' : 'アラームを編集'}</Text>{draft.groupLinked && <Text style={[styles.editorSubtitle, { color: t.subtext }]}>時刻はあなたのグループ起床目標にも反映されます</Text>}</View>
+              <View style={{ flex: 1 }}><Text style={[styles.editorTitle, { color: t.text }]}>{draft.groupLinked ? 'グループ起床アラーム' : alarms.some((alarm) => alarm.id === draft.id) ? 'アラームを編集' : 'アラームを追加'}</Text>{draft.groupLinked && <Text style={[styles.editorSubtitle, { color: t.subtext }]}>時刻はあなたのグループ起床目標にも反映されます</Text>}</View>
               <Pressable accessibilityRole="button" accessibilityLabel="編集を閉じる" onPress={closeEditor} hitSlop={10}><SymbolView name="xmark" tintColor={t.subtext} size={18} /></Pressable>
             </View>
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.editorScroll}>
               <View style={{ gap: 7 }}>
                 <Text style={[styles.fieldLabel, { color: t.subtext }]}>アラーム名</Text>
-                <TextInput value={draft.label} onChangeText={(label) => setDraft({ ...draft, label })} maxLength={32} placeholder="例：朝の支度" placeholderTextColor={t.muted} style={[styles.nameInput, { color: t.text, backgroundColor: t.bg }]} returnKeyType="done" />
+                <TextInput value={draft.label} onChangeText={(label) => setDraft({ ...draft, label })} maxLength={32} placeholder="例：朝の支度" placeholderTextColor={t.muted} style={[styles.nameInput, { color: t.text, backgroundColor: t.bg }]} returnKeyType="done" onSubmitEditing={Keyboard.dismiss} />
               </View>
               <View style={{ gap: 4 }}>
                 <Text style={[styles.fieldLabel, { color: t.subtext }]}>時刻</Text>
@@ -197,7 +197,7 @@ export function WakeAlarmCard() {
                   <Pressable onPress={() => setDraft({ ...draft, weekdays: [0, 6] })}><Text style={[styles.preset, { color: t.accent }]}>土日</Text></Pressable>
                 </View>
               </View>
-              {!draft.groupLinked && <Pressable onPress={() => deleteAlarm(draft)} style={styles.deleteButton}><SymbolView name="trash" tintColor={t.danger} size={16} /><Text style={[styles.deleteText, { color: t.danger }]}>このアラームを削除</Text></Pressable>}
+              {!draft.groupLinked && <Pressable accessibilityRole="button" accessibilityLabel="このアラームを削除" onPress={() => deleteAlarm(draft)} style={styles.deleteButton}><SymbolView name="trash" tintColor={t.danger} size={16} /><Text style={[styles.deleteText, { color: t.danger }]}>このアラームを削除</Text></Pressable>}
             </ScrollView>
             <View style={styles.actions}>
               <Button3D title="キャンセル" variant="secondary" onPress={closeEditor} style={{ flex: 1 }} />
@@ -237,5 +237,5 @@ const toHHmm = (date: Date) => `${String(date.getHours()).padStart(2, '0')}:${St
 const styles = StyleSheet.create({
   root: { gap: 12 }, sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 2 }, sectionTitle: { fontSize: 20, fontWeight: '900' }, sectionSub: { fontSize: 12, fontWeight: '600', marginTop: 2 }, addButton: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
   alarmCard: { padding: 15, gap: 11 }, alarmMain: { flexDirection: 'row', alignItems: 'center', gap: 12 }, titleLine: { flexDirection: 'row', alignItems: 'center', gap: 8 }, alarmLabel: { flexShrink: 1, fontSize: 15, fontWeight: '900' }, linkBadge: { borderRadius: 8, paddingHorizontal: 7, paddingVertical: 3 }, linkBadgeText: { fontSize: 10, fontWeight: '800' }, alarmTime: { fontSize: 38, lineHeight: 43, fontWeight: '900', fontVariant: ['tabular-nums'], letterSpacing: -1 }, alarmMeta: { fontSize: 12, fontWeight: '700' }, alarmHint: { fontSize: 11, lineHeight: 16, fontWeight: '600' }, cardRule: { height: StyleSheet.hairlineWidth }, switchRow: { minHeight: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, switchLabel: { fontSize: 12, fontWeight: '700' }, errorText: { fontSize: 12, fontWeight: '700' }, footer: { fontSize: 11, lineHeight: 16, paddingHorizontal: 2 },
-  modalRoot: { flex: 1, justifyContent: 'flex-end', paddingHorizontal: 12, backgroundColor: 'rgba(0,0,0,0.34)' }, editor: { maxHeight: '94%', borderRadius: 24, padding: 17, gap: 12 }, editorHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 }, editorTitle: { fontSize: 19, fontWeight: '900' }, editorSubtitle: { fontSize: 12, lineHeight: 17, fontWeight: '600', marginTop: 3 }, editorScroll: { gap: 14, paddingBottom: 4 }, fieldLabel: { fontSize: 12, fontWeight: '800' }, nameInput: { minHeight: 46, borderRadius: 13, paddingHorizontal: 12, fontSize: 16, fontWeight: '700' }, days: { flexDirection: 'row', gap: 7, justifyContent: 'space-between' }, day: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' }, dayText: { fontSize: 13, fontWeight: '900' }, presetRow: { flexDirection: 'row', gap: 18 }, preset: { fontSize: 12, fontWeight: '800' }, deleteButton: { minHeight: 40, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 7 }, deleteText: { fontSize: 13, fontWeight: '800' }, actions: { flexDirection: 'row', gap: 10 },
+  modalRoot: { flex: 1, justifyContent: 'flex-end', paddingHorizontal: 12, backgroundColor: 'rgba(0,0,0,0.34)' }, editor: { height: '90%', maxHeight: '90%', flexShrink: 1, borderRadius: 24, padding: 17, gap: 12 }, editorHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 }, editorTitle: { fontSize: 19, fontWeight: '900' }, editorSubtitle: { fontSize: 12, lineHeight: 17, fontWeight: '600', marginTop: 3 }, editorScroll: { flex: 1, gap: 14, paddingBottom: 4 }, fieldLabel: { fontSize: 12, fontWeight: '800' }, nameInput: { minHeight: 46, borderRadius: 13, paddingHorizontal: 12, fontSize: 16, fontWeight: '700' }, days: { flexDirection: 'row', gap: 7, justifyContent: 'space-between' }, day: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' }, dayText: { fontSize: 13, fontWeight: '900' }, presetRow: { flexDirection: 'row', gap: 18 }, preset: { fontSize: 12, fontWeight: '800' }, deleteButton: { minHeight: 40, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 7 }, deleteText: { fontSize: 13, fontWeight: '800' }, actions: { flexDirection: 'row', gap: 10 },
 });
